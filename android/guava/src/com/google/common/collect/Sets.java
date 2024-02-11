@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
@@ -30,6 +29,7 @@ import com.google.common.collect.Collections2.FilteredCollection;
 import com.google.common.math.IntMath;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -50,6 +50,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -140,6 +141,17 @@ public final class Sets {
   }
 
   /**
+   * Returns a {@code Collector} that accumulates the input elements into a new {@code ImmutableSet}
+   * with an implementation specialized for enums. Unlike {@link ImmutableSet#toImmutableSet}, the
+   * resulting set will iterate over elements in their enum definition order, not encounter order.
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  static <E extends Enum<E>> Collector<E, ?, ImmutableSet<E>> toImmutableEnumSet() {
+    return CollectCollectors.toImmutableEnumSet();
+  }
+
+  /**
    * Returns a new, <i>mutable</i> {@code EnumSet} instance containing the given elements in their
    * natural order. This method behaves identically to {@link EnumSet#copyOf(Collection)}, but also
    * accepts non-{@code Collection} iterables and empty iterables.
@@ -182,6 +194,7 @@ public final class Sets {
    * asList}{@code (...))}, or for creating an empty set then calling {@link Collections#addAll}.
    * This method is not actually very useful and will likely be deprecated in the future.
    */
+  @SuppressWarnings("nullness") // TODO: b/316358623 - Remove after checker fix.
   public static <E extends @Nullable Object> HashSet<E> newHashSet(E... elements) {
     HashSet<E> set = newHashSetWithExpectedSize(elements.length);
     Collections.addAll(set, elements);
@@ -467,6 +480,7 @@ public final class Sets {
    *     contains no elements
    */
   @J2ktIncompatible
+  @GwtIncompatible // EnumSet.complementOf
   public static <E extends Enum<E>> EnumSet<E> complementOf(Collection<E> collection) {
     if (collection instanceof EnumSet) {
       return EnumSet.complementOf((EnumSet<E>) collection);
@@ -487,6 +501,8 @@ public final class Sets {
    * @return a new, modifiable {@code EnumSet} initially containing all the values of the enum not
    *     present in the given collection
    */
+  @J2ktIncompatible
+  @GwtIncompatible // EnumSet.complementOf
   public static <E extends Enum<E>> EnumSet<E> complementOf(
       Collection<E> collection, Class<E> type) {
     checkNotNull(collection);
@@ -495,6 +511,8 @@ public final class Sets {
         : makeComplementByHand(collection, type);
   }
 
+  @J2ktIncompatible
+  @GwtIncompatible
   private static <E extends Enum<E>> EnumSet<E> makeComplementByHand(
       Collection<E> collection, Class<E> type) {
     EnumSet<E> result = EnumSet.allOf(type);
@@ -1371,6 +1389,15 @@ public final class Sets {
             boolean isPartialView() {
               return true;
             }
+
+            // redeclare to help optimizers with b/310253115
+            @SuppressWarnings("RedundantOverride")
+            @Override
+            @J2ktIncompatible // serialization
+            @GwtIncompatible // serialization
+            Object writeReplace() {
+              return super.writeReplace();
+            }
           };
       return new CartesianSet<E>(axes, new CartesianList<E>(listAxes));
     }
@@ -1412,7 +1439,11 @@ public final class Sets {
         CartesianSet<?> that = (CartesianSet<?>) object;
         return this.axes.equals(that.axes);
       }
-      return super.equals(object);
+      if (object instanceof Set) {
+        Set<?> that = (Set<?>) object;
+        return this.size() == that.size() && this.containsAll(that);
+      }
+      return false;
     }
 
     @Override
@@ -1598,7 +1629,6 @@ public final class Sets {
    * @throws NullPointerException if {@code set} is or contains {@code null}
    * @since 23.0
    */
-  @Beta
   public static <E> Set<Set<E>> combinations(Set<E> set, final int size) {
     final ImmutableMap<E, Integer> index = Maps.indexMap(set);
     checkNonnegative(size, "size");
@@ -1635,6 +1665,7 @@ public final class Sets {
               if (bitToFlip == index.size()) {
                 return endOfData();
               }
+
               /*
                * The current set in sorted order looks like
                * {firstSetBit, firstSetBit + 1, ..., bitToFlip - 1, ...}
@@ -1736,6 +1767,8 @@ public final class Sets {
    * <p>The returned navigable set will be serializable if the specified navigable set is
    * serializable.
    *
+   * <p><b>Java 8 users and later:</b> Prefer {@link Collections#unmodifiableNavigableSet}.
+   *
    * @param set the navigable set for which an unmodifiable view is to be returned
    * @return an unmodifiable view of the specified navigable set
    * @since 12.0
@@ -1799,7 +1832,7 @@ public final class Sets {
       throw new UnsupportedOperationException();
     }
 
-    @CheckForNull private transient UnmodifiableNavigableSet<E> descendingSet;
+    @LazyInit @CheckForNull private transient UnmodifiableNavigableSet<E> descendingSet;
 
     @Override
     public NavigableSet<E> descendingSet() {
@@ -1879,6 +1912,8 @@ public final class Sets {
    *
    * <p>The returned navigable set will be serializable if the specified navigable set is
    * serializable.
+   *
+   * <p><b>Java 8 users and later:</b> Prefer {@link Collections#synchronizedNavigableSet}.
    *
    * @param navigableSet the navigable set to be "wrapped" in a synchronized navigable set.
    * @return a synchronized view of the specified navigable set.
@@ -2077,7 +2112,6 @@ public final class Sets {
    *
    * @since 20.0
    */
-  @Beta
   @GwtIncompatible // NavigableSet
   public static <K extends Comparable<? super K>> NavigableSet<K> subSet(
       NavigableSet<K> set, Range<K> range) {

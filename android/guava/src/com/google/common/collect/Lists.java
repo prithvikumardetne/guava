@@ -25,7 +25,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.CollectPreconditions.checkRemove;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
@@ -101,6 +100,7 @@ public final class Lists {
    */
   @SafeVarargs
   @GwtCompatible(serializable = true)
+  @SuppressWarnings("nullness") // TODO: b/316358623 - Remove after checker fix.
   public static <E extends @Nullable Object> ArrayList<E> newArrayList(E... elements) {
     checkNotNull(elements); // for GWT
     // Avoid integer overflow when a large array is passed in
@@ -556,8 +556,8 @@ public final class Lists {
      * can be overkill. That's why we forward this call directly to the backing list.
      */
     @Override
-    public void clear() {
-      fromList.clear();
+    protected void removeRange(int fromIndex, int toIndex) {
+      fromList.subList(fromIndex, toIndex).clear();
     }
 
     @Override
@@ -597,9 +597,13 @@ public final class Lists {
       this.function = checkNotNull(function);
     }
 
+    /**
+     * The default implementation inherited is based on iteration and removal of each element which
+     * can be overkill. That's why we forward this call directly to the backing list.
+     */
     @Override
-    public void clear() {
-      fromList.clear();
+    protected void removeRange(int fromIndex, int toIndex) {
+      fromList.subList(fromIndex, toIndex).clear();
     }
 
     @Override
@@ -622,6 +626,8 @@ public final class Lists {
         }
       };
     }
+
+    // TODO: cpovirk - Why override `isEmpty` here but not in TransformingSequentialList?
 
     @Override
     public boolean isEmpty() {
@@ -717,7 +723,6 @@ public final class Lists {
    * @return an {@code List<Character>} view of the character sequence
    * @since 7.0
    */
-  @Beta
   public static List<Character> charactersOf(CharSequence sequence) {
     return new CharSequenceAsList(checkNotNull(sequence));
   }
@@ -761,6 +766,15 @@ public final class Lists {
     @Override
     public int size() {
       return string.length();
+    }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
     }
   }
 

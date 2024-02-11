@@ -33,6 +33,7 @@ import static java.math.RoundingMode.UNNECESSARY;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.testing.NullPointerTester;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -402,6 +403,7 @@ public class LongMathTest extends TestCase {
     }
   }
 
+  @J2ktIncompatible // J2kt BigDecimal.divide also has the rounding bug
   @GwtIncompatible // TODO
   @AndroidIncompatible // TODO(cpovirk): File BigDecimal.divide() rounding bug.
   public void testDivNonZero() {
@@ -883,6 +885,7 @@ public class LongMathTest extends TestCase {
     return big.longValue();
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNullPointers() {
     NullPointerTester tester = new NullPointerTester();
@@ -988,6 +991,7 @@ public class LongMathTest extends TestCase {
     Long.MIN_VALUE
   };
 
+  @J2ktIncompatible // EnumSet.complementOf
   @GwtIncompatible
   public void testRoundToDoubleAgainstBigInteger() {
     for (RoundingMode roundingMode : EnumSet.complementOf(EnumSet.of(UNNECESSARY))) {

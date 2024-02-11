@@ -25,8 +25,8 @@ import static com.google.common.collect.ObjectArrays.checkElementsNotNull;
 import static com.google.common.collect.RegularImmutableList.EMPTY;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -249,8 +249,8 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    *
    * <p>Note that if {@code list} is a {@code List<String>}, then {@code ImmutableList.copyOf(list)}
    * returns an {@code ImmutableList<String>} containing each of the strings in {@code list}, while
-   * ImmutableList.of(list)} returns an {@code ImmutableList<List<String>>} containing one element
-   * (the given list itself).
+   * {@code ImmutableList.of(list)} returns an {@code ImmutableList<List<String>>} containing one
+   * element (the given list itself).
    *
    * <p>This method is safe to use even when {@code elements} is a synchronized or concurrent
    * collection that is currently being modified by another thread.
@@ -445,6 +445,12 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Returns an immutable list of the elements between the specified {@code fromIndex}, inclusive,
    * and {@code toIndex}, exclusive. (If {@code fromIndex} and {@code toIndex} are equal, the empty
    * immutable list is returned.)
+   *
+   * <p><b>Note:</b> in almost all circumstances, the returned {@link ImmutableList} retains a
+   * strong reference to {@code this}, which may prevent the original list from being garbage
+   * collected. If you want the original list to be eligible for garbage collection, you should
+   * create and use a copy of the sub list (e.g., {@code
+   * ImmutableList.copyOf(originalList.subList(...))}).
    */
   @Override
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
@@ -498,6 +504,15 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     @Override
     boolean isPartialView() {
       return true;
+    }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
     }
   }
 
@@ -578,7 +593,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
-  public final void sort(Comparator<? super E> c) {
+  public final void sort(@Nullable Comparator<? super E> c) {
     throw new UnsupportedOperationException();
   }
 
@@ -679,6 +694,15 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     boolean isPartialView() {
       return forwardList.isPartialView();
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   @Override
@@ -725,6 +749,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
 
   @Override
   @J2ktIncompatible // serialization
+  @GwtIncompatible // serialization
   Object writeReplace() {
     return new SerializedForm(toArray());
   }
@@ -749,7 +774,6 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    *
    * @since 23.1
    */
-  @Beta
   public static <E> Builder<E> builderWithExpectedSize(int expectedSize) {
     checkNonnegative(expectedSize, "expectedSize");
     return new ImmutableList.Builder<E>(expectedSize);
@@ -903,4 +927,6 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
       return asImmutableList(contents, size);
     }
   }
+
+  private static final long serialVersionUID = 0xcafebabe;
 }

@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.testing.Helpers.assertEqualIgnoringOrder;
 import static com.google.common.collect.testing.Helpers.assertEqualInOrder;
 import static com.google.common.collect.testing.Platform.format;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.Comparator.naturalOrder;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -34,8 +36,9 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -104,20 +107,12 @@ public final class SpliteratorTester<E> {
     }
 
     @Override
-    GeneralSpliterator<E> trySplit() {
+    @Nullable GeneralSpliterator<E> trySplit() {
       Spliterator<E> split = spliterator.trySplit();
       return split == null ? null : new GeneralSpliteratorOfObject<>(split);
     }
   }
 
-  /*
-   * The AndroidJdkLibsChecker violation is informing us that this method isn't usable under
-   * Desugar. But we want to include it here for Nougat+ users -- and, mainly, for non-Android
-   * users. Fortunately, anyone who tries to use it under Desugar will presumably already see errors
-   * from creating the Spliterator.OfInt in the first place. So it's probably OK for us to suppress
-   * this particular violation.
-   */
-  @SuppressWarnings("AndroidJdkLibsChecker")
   private static final class GeneralSpliteratorOfPrimitive<E, C> extends GeneralSpliterator<E> {
     final Spliterator.OfPrimitive<E, C, ?> spliterator;
     final Function<Consumer<? super E>, C> consumerizer;
@@ -141,7 +136,7 @@ public final class SpliteratorTester<E> {
     }
 
     @Override
-    GeneralSpliterator<E> trySplit() {
+    @Nullable GeneralSpliterator<E> trySplit() {
       Spliterator.OfPrimitive<E, C, ?> split = spliterator.trySplit();
       return split == null ? null : new GeneralSpliteratorOfPrimitive<>(split, consumerizer);
     }
@@ -199,6 +194,9 @@ public final class SpliteratorTester<E> {
     };
 
     abstract <E> void forEach(GeneralSpliterator<E> spliterator, Consumer<? super E> consumer);
+
+    static final Set<SpliteratorDecompositionStrategy> ALL_STRATEGIES =
+        unmodifiableSet(new LinkedHashSet<>(asList(values())));
   }
 
   private static <E> @Nullable GeneralSpliterator<E> trySplitTestingSize(
@@ -242,7 +240,6 @@ public final class SpliteratorTester<E> {
   }
 
   /** @since 28.1 */
-  @SuppressWarnings("AndroidJdkLibsChecker") // see comment on GeneralSpliteratorOfPrimitive
   public static SpliteratorTester<Integer> ofInt(Supplier<Spliterator.OfInt> spliteratorSupplier) {
     return new SpliteratorTester<>(
         ImmutableSet.of(
@@ -251,7 +248,6 @@ public final class SpliteratorTester<E> {
   }
 
   /** @since 28.1 */
-  @SuppressWarnings("AndroidJdkLibsChecker") // see comment on GeneralSpliteratorOfPrimitive
   public static SpliteratorTester<Long> ofLong(Supplier<Spliterator.OfLong> spliteratorSupplier) {
     return new SpliteratorTester<>(
         ImmutableSet.of(
@@ -260,7 +256,6 @@ public final class SpliteratorTester<E> {
   }
 
   /** @since 28.1 */
-  @SuppressWarnings("AndroidJdkLibsChecker") // see comment on GeneralSpliteratorOfPrimitive
   public static SpliteratorTester<Double> ofDouble(
       Supplier<Spliterator.OfDouble> spliteratorSupplier) {
     return new SpliteratorTester<>(
@@ -289,7 +284,7 @@ public final class SpliteratorTester<E> {
       int characteristics = spliterator.characteristics();
       long estimatedSize = spliterator.estimateSize();
       for (SpliteratorDecompositionStrategy strategy :
-          EnumSet.allOf(SpliteratorDecompositionStrategy.class)) {
+          SpliteratorDecompositionStrategy.ALL_STRATEGIES) {
         List<E> resultsForStrategy = new ArrayList<>();
         strategy.forEach(spliteratorSupplier.get(), resultsForStrategy::add);
 

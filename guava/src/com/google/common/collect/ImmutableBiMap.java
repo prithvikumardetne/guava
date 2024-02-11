@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -46,8 +46,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 @GwtCompatible(serializable = true, emulated = true)
 @ElementTypesAreNonnullByDefault
-public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<K, V>
-    implements BiMap<K, V> {
+public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements BiMap<K, V> {
 
   /**
    * Returns a {@link Collector} that accumulates elements into an {@code ImmutableBiMap} whose keys
@@ -303,7 +302,6 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<
    *
    * @since 23.1
    */
-  @Beta
   public static <K, V> Builder<K, V> builderWithExpectedSize(int expectedSize) {
     checkNonnegative(expectedSize, "expectedSize");
     return new Builder<>(expectedSize);
@@ -394,7 +392,6 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<
      * @since 19.0
      */
     @CanIgnoreReturnValue
-    @Beta
     @Override
     public Builder<K, V> putAll(Iterable<? extends Entry<? extends K, ? extends V>> entries) {
       super.putAll(entries);
@@ -412,7 +409,6 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<
      * @since 19.0
      */
     @CanIgnoreReturnValue
-    @Beta
     @Override
     public Builder<K, V> orderEntriesByValue(Comparator<? super V> valueComparator) {
       super.orderEntriesByValue(valueComparator);
@@ -556,7 +552,6 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<
    * @throws NullPointerException if any key, value, or entry is null
    * @since 19.0
    */
-  @Beta
   public static <K, V> ImmutableBiMap<K, V> copyOf(
       Iterable<? extends Entry<? extends K, ? extends V>> entries) {
     @SuppressWarnings("unchecked") // we'll only be using getKey and getValue, which are covariant
@@ -647,4 +642,40 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableBiMapFauxverideShim<
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
+
+  /**
+   * Not supported. Use {@link #toImmutableBiMap} instead. This method exists only to hide {@link
+   * ImmutableMap#toImmutableMap(Function, Function)} from consumers of {@code ImmutableBiMap}.
+   *
+   * @throws UnsupportedOperationException always
+   * @deprecated Use {@link ImmutableBiMap#toImmutableBiMap}.
+   */
+  @Deprecated
+  @DoNotCall("Use toImmutableBiMap")
+  public static <T extends @Nullable Object, K, V>
+      Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+          Function<? super T, ? extends K> keyFunction,
+          Function<? super T, ? extends V> valueFunction) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Not supported. This method does not make sense for {@code BiMap}. This method exists only to
+   * hide {@link ImmutableMap#toImmutableMap(Function, Function, BinaryOperator)} from consumers of
+   * {@code ImmutableBiMap}.
+   *
+   * @throws UnsupportedOperationException always
+   * @deprecated
+   */
+  @Deprecated
+  @DoNotCall("Use toImmutableBiMap")
+  public static <T extends @Nullable Object, K, V>
+      Collector<T, ?, ImmutableMap<K, V>> toImmutableMap(
+          Function<? super T, ? extends K> keyFunction,
+          Function<? super T, ? extends V> valueFunction,
+          BinaryOperator<V> mergeFunction) {
+    throw new UnsupportedOperationException();
+  }
+
+  private static final long serialVersionUID = 0xcafebabe;
 }

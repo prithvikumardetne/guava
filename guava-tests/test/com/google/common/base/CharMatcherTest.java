@@ -27,6 +27,7 @@ import static com.google.common.base.CharMatcher.whitespace;
 
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.Sets;
 import com.google.common.testing.NullPointerTester;
 import java.util.Arrays;
@@ -43,8 +44,10 @@ import junit.framework.TestCase;
  * @author Kevin Bourrillion
  */
 @GwtCompatible(emulated = true)
+@ElementTypesAreNonnullByDefault
 public class CharMatcherTest extends TestCase {
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testStaticNullPointers() throws Exception {
     NullPointerTester tester = new NullPointerTester();
@@ -90,6 +93,7 @@ public class CharMatcherTest extends TestCase {
   // The next tests require ICU4J and have, at least for now, been sliced out
   // of the open-source view of the tests.
 
+  @J2ktIncompatible
   @GwtIncompatible // Character.isISOControl
   public void testJavaIsoControl() {
     for (int c = 0; c <= Character.MAX_VALUE; c++) {
@@ -151,6 +155,7 @@ public class CharMatcherTest extends TestCase {
     doTestEmpty(forPredicate(Predicates.equalTo('c')));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   public void testNull() throws Exception {
     doTestNull(CharMatcher.any());
@@ -196,6 +201,7 @@ public class CharMatcherTest extends TestCase {
     assertEquals(0, matcher.countIn(""));
   }
 
+  @J2ktIncompatible
   @GwtIncompatible // NullPointerTester
   private static void doTestNull(CharMatcher matcher) throws Exception {
     NullPointerTester tester = new NullPointerTester();
@@ -303,6 +309,8 @@ public class CharMatcherTest extends TestCase {
     assertEquals(s.length(), matcher.countIn(s));
   }
 
+  // Kotlin subSequence()/replace() always return new strings, violating expectations of this test
+  @J2ktIncompatible
   public void testGeneral() {
     doTestGeneral(is('a'), 'a', 'b');
     doTestGeneral(isNot('a'), 'b', 'a');
@@ -642,6 +650,14 @@ public class CharMatcherTest extends TestCase {
     assertEquals("yoho", is('a').replaceFrom("yaha", "o"));
     assertEquals("yoohoo", is('a').replaceFrom("yaha", "oo"));
     assertEquals("12 &gt; 5", is('>').replaceFrom("12 > 5", "&gt;"));
+  }
+
+  public void testRetainFrom() {
+    assertEquals("aaa", is('a').retainFrom("bazaar"));
+    assertEquals("z", is('z').retainFrom("bazaar"));
+    assertEquals("!", is('!').retainFrom("!@#$%^&*()-="));
+    assertEquals("", is('x').retainFrom("bazaar"));
+    assertEquals("", is('a').retainFrom(""));
   }
 
   public void testPrecomputedOptimizations() {

@@ -22,7 +22,6 @@ import static com.google.common.collect.SortedLists.KeyAbsentBehavior.NEXT_LOWER
 import static com.google.common.collect.SortedLists.KeyPresentBehavior.ANY_PRESENT;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.collect.SortedLists.KeyAbsentBehavior;
@@ -49,7 +48,6 @@ import javax.annotation.CheckForNull;
  * @author Louis Wasserman
  * @since 14.0
  */
-@Beta
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 public final class ImmutableRangeSet<C extends Comparable> extends AbstractRangeSet<C>
@@ -370,6 +368,14 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
     boolean isPartialView() {
       return true;
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   @Override
@@ -489,6 +495,15 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
         boolean isPartialView() {
           return true;
         }
+
+        // redeclare to help optimizers with b/310253115
+        @SuppressWarnings("RedundantOverride")
+        @Override
+        @J2ktIncompatible // serialization
+        @GwtIncompatible // serialization
+        Object writeReplace() {
+          return super.writeReplace();
+        }
       };
     }
   }
@@ -557,7 +572,7 @@ public final class ImmutableRangeSet<C extends Comparable> extends AbstractRange
       this.domain = domain;
     }
 
-    @CheckForNull private transient Integer size;
+    @LazyInit @CheckForNull private transient Integer size;
 
     @Override
     public int size() {

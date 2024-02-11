@@ -70,7 +70,6 @@ public final class Throwables {
    *
    * @since 20.0
    */
-  @J2ktIncompatible
   @GwtIncompatible // Class.cast, Class.isInstance
   public static <X extends Throwable> void throwIfInstanceOf(
       Throwable throwable, Class<X> declaredType) throws X {
@@ -140,18 +139,7 @@ public final class Throwables {
 
   /**
    * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
-   * RuntimeException} or {@link Error}. Example usage:
-   *
-   * <pre>
-   * try {
-   *   someMethodThatCouldThrowAnything();
-   * } catch (IKnowWhatToDoWithThisException e) {
-   *   handle(e);
-   * } catch (Throwable t) {
-   *   Throwables.propagateIfPossible(t);
-   *   throw new RuntimeException("unexpected", t);
-   * }
-   * </pre>
+   * RuntimeException} or {@link Error}.
    *
    * @deprecated Use {@link #throwIfUnchecked}, which has the same behavior but rejects {@code
    *     null}.
@@ -167,18 +155,10 @@ public final class Throwables {
 
   /**
    * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
-   * RuntimeException}, {@link Error}, or {@code declaredType}. Example usage:
+   * RuntimeException}, {@link Error}, or {@code declaredType}.
    *
-   * <pre>
-   * try {
-   *   someMethodThatCouldThrowAnything();
-   * } catch (IKnowWhatToDoWithThisException e) {
-   *   handle(e);
-   * } catch (Throwable t) {
-   *   Throwables.propagateIfPossible(t, OtherException.class);
-   *   throw new RuntimeException("unexpected", t);
-   * }
-   * </pre>
+   * <p><b>Discouraged</b> in favor of calling {@link #throwIfInstanceOf} and {@link
+   * #throwIfUnchecked}.
    *
    * @param throwable the Throwable to possibly propagate
    * @param declaredType the single checked exception type declared by the calling method
@@ -193,10 +173,10 @@ public final class Throwables {
 
   /**
    * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
-   * RuntimeException}, {@link Error}, {@code declaredType1}, or {@code declaredType2}. In the
-   * unlikely case that you have three or more declared checked exception types, you can handle them
-   * all by invoking these methods repeatedly. See usage example in {@link
-   * #propagateIfPossible(Throwable, Class)}.
+   * RuntimeException}, {@link Error}, {@code declaredType1}, or {@code declaredType2}.
+   *
+   * <p><b>Discouraged</b> in favor of calling {@link #throwIfInstanceOf} and {@link
+   * #throwIfUnchecked}.
    *
    * @param throwable the Throwable to possibly propagate
    * @param declaredType1 any checked exception type declared by the calling method
@@ -235,10 +215,11 @@ public final class Throwables {
    * @param throwable the Throwable to propagate
    * @return nothing will ever be returned; this return type is only for your convenience, as
    *     illustrated in the example above
-   * @deprecated Use {@code throw e} or {@code throw new RuntimeException(e)} directly, or use a
-   *     combination of {@link #throwIfUnchecked} and {@code throw new RuntimeException(e)}. For
-   *     background on the deprecation, read <a href="https://goo.gl/Ivn2kc">Why we deprecated
-   *     {@code Throwables.propagate}</a>.
+   * @deprecated To preserve behavior, use {@code throw e} or {@code throw new RuntimeException(e)}
+   *     directly, or use a combination of {@link #throwIfUnchecked} and {@code throw new
+   *     RuntimeException(e)}. But consider whether users would be better off if your API threw a
+   *     different type of exception. For background on the deprecation, read <a
+   *     href="https://goo.gl/Ivn2kc">Why we deprecated {@code Throwables.propagate}</a>.
    */
   @CanIgnoreReturnValue
   @J2ktIncompatible
@@ -335,7 +316,6 @@ public final class Throwables {
    *     ClassCastException}'s cause is {@code throwable}.
    * @since 22.0
    */
-  @J2ktIncompatible
   @GwtIncompatible // Class.cast(Object)
   @CheckForNull
   public static <X extends Throwable> X getCauseAs(

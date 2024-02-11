@@ -25,10 +25,8 @@ import static java.lang.Math.min;
 import static java.math.RoundingMode.HALF_EVEN;
 import static java.math.RoundingMode.HALF_UP;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
-import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.UnsignedLongs;
@@ -65,7 +63,6 @@ public final class LongMath {
    *     long}, i.e. when {@code x > 2^62}
    * @since 20.0
    */
-  @Beta
   public static long ceilingPowerOfTwo(long x) {
     checkPositive("x", x);
     if (x > MAX_SIGNED_POWER_OF_TWO) {
@@ -81,7 +78,6 @@ public final class LongMath {
    * @throws IllegalArgumentException if {@code x <= 0}
    * @since 20.0
    */
-  @Beta
   public static long floorPowerOfTwo(long x) {
     checkPositive("x", x);
 
@@ -158,7 +154,6 @@ public final class LongMath {
    * @throws ArithmeticException if {@code mode} is {@link RoundingMode#UNNECESSARY} and {@code x}
    *     is not a power of ten
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @SuppressWarnings("fallthrough")
   // TODO(kevinb): remove after this warning is disabled globally
@@ -185,7 +180,6 @@ public final class LongMath {
     throw new AssertionError();
   }
 
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   static int log10Floor(long x) {
     /*
@@ -211,7 +205,6 @@ public final class LongMath {
     3, 2, 2, 2, 1, 1, 1, 0, 0, 0
   };
 
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @VisibleForTesting
   static final long[] powersOf10 = {
@@ -237,7 +230,6 @@ public final class LongMath {
   };
 
   // halfPowersOf10[i] = largest long less than 10^(i + 0.5)
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @VisibleForTesting
   static final long[] halfPowersOf10 = {
@@ -269,7 +261,6 @@ public final class LongMath {
    *
    * @throws IllegalArgumentException if {@code k < 0}
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   public static long pow(long b, int k) {
     checkNonNegative("exponent", k);
@@ -313,7 +304,6 @@ public final class LongMath {
    * @throws ArithmeticException if {@code mode} is {@link RoundingMode#UNNECESSARY} and {@code
    *     sqrt(x)} is not an integer
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   public static long sqrt(long x, RoundingMode mode) {
     checkNonNegative("x", x);
@@ -384,7 +374,6 @@ public final class LongMath {
    * @throws ArithmeticException if {@code q == 0}, or if {@code mode == UNNECESSARY} and {@code a}
    *     is not an integer multiple of {@code b}
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @SuppressWarnings("fallthrough")
   public static long divide(long p, long q, RoundingMode mode) {
@@ -458,7 +447,6 @@ public final class LongMath {
    * @see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.17.3">
    *     Remainder Operator</a>
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   public static int mod(long x, int m) {
     // Cast is safe because the result is guaranteed in the range [0, m)
@@ -483,7 +471,6 @@ public final class LongMath {
    * @see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.17.3">
    *     Remainder Operator</a>
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   public static long mod(long x, long m) {
     if (m <= 0) {
@@ -561,7 +548,6 @@ public final class LongMath {
    *
    * @throws ArithmeticException if {@code a - b} overflows in signed {@code long} arithmetic
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @SuppressWarnings("ShortCircuitBoolean")
   public static long checkedSubtract(long a, long b) {
@@ -609,7 +595,6 @@ public final class LongMath {
    * @throws ArithmeticException if {@code b} to the {@code k}th power overflows in signed {@code
    *     long} arithmetic
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   @SuppressWarnings("ShortCircuitBoolean")
   public static long checkedPow(long b, int k) {
@@ -659,7 +644,6 @@ public final class LongMath {
    *
    * @since 20.0
    */
-  @Beta
   @SuppressWarnings("ShortCircuitBoolean")
   public static long saturatedAdd(long a, long b) {
     long naiveSum = a + b;
@@ -678,7 +662,6 @@ public final class LongMath {
    *
    * @since 20.0
    */
-  @Beta
   @SuppressWarnings("ShortCircuitBoolean")
   public static long saturatedSubtract(long a, long b) {
     long naiveDifference = a - b;
@@ -697,7 +680,6 @@ public final class LongMath {
    *
    * @since 20.0
    */
-  @Beta
   @SuppressWarnings("ShortCircuitBoolean")
   public static long saturatedMultiply(long a, long b) {
     // see checkedMultiply for explanation
@@ -728,7 +710,6 @@ public final class LongMath {
    *
    * @since 20.0
    */
-  @Beta
   @SuppressWarnings("ShortCircuitBoolean")
   public static long saturatedPow(long b, int k) {
     checkNonNegative("exponent", k);
@@ -786,7 +767,6 @@ public final class LongMath {
    *
    * @throws IllegalArgumentException if {@code n < 0}
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
   public static long factorial(int n) {
     checkNonNegative("n", n);
@@ -1015,9 +995,7 @@ public final class LongMath {
    * @throws IllegalArgumentException if {@code n} is negative
    * @since 20.0
    */
-  @J2ktIncompatible
   @GwtIncompatible // TODO
-  @Beta
   public static boolean isPrime(long n) {
     if (n < 2) {
       checkNonNegative("n", n);
@@ -1260,7 +1238,6 @@ public final class LongMath {
    * @since 30.0
    */
   @SuppressWarnings("deprecation")
-  @J2ktIncompatible
   @GwtIncompatible
   public static double roundToDouble(long x, RoundingMode mode) {
     // Logic adapted from ToDoubleRounder.

@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.testing.NullPointerTester.isNullable;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import javax.annotation.CheckForNull;
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -79,8 +80,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Ben Yu
  * @since 14.0
  */
-@Beta
 @GwtIncompatible
+@J2ktIncompatible
 public final class ClassSanityTester {
 
   private static final Ordering<Invokable<?, ?>> BY_METHOD_NAME =
@@ -344,7 +345,7 @@ public final class ClassSanityTester {
           FactoryMethodReturnsNullException {
     if (cls.isEnum()) {
       T[] constants = cls.getEnumConstants();
-      if (constants.length > 0) {
+      if (constants != null && constants.length > 0) {
         return constants[0];
       } else {
         return null;
@@ -496,13 +497,14 @@ public final class ClassSanityTester {
      * @return this tester
      */
     @CanIgnoreReturnValue
+    @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
     public FactoryMethodReturnValueTester testSerializable() throws Exception {
       for (Invokable<?, ?> factory : getFactoriesToTest()) {
         Object instance = instantiate(factory);
         if (instance != null) {
           try {
             SerializableTester.reserialize(instance);
-          } catch (RuntimeException e) {
+          } catch (Exception e) { // sneaky checked exception
             AssertionError error =
                 new AssertionFailedError("Serialization failed on return value of " + factory);
             error.initCause(e.getCause());
@@ -522,6 +524,7 @@ public final class ClassSanityTester {
      * @return this tester
      */
     @CanIgnoreReturnValue
+    @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
     public FactoryMethodReturnValueTester testEqualsAndSerializable() throws Exception {
       for (Invokable<?, ?> factory : getFactoriesToTest()) {
         try {
@@ -533,7 +536,7 @@ public final class ClassSanityTester {
         if (instance != null) {
           try {
             SerializableTester.reserializeAndAssert(instance);
-          } catch (RuntimeException e) {
+          } catch (Exception e) { // sneaky checked exception
             AssertionError error =
                 new AssertionFailedError("Serialization failed on return value of " + factory);
             error.initCause(e.getCause());
@@ -576,7 +579,7 @@ public final class ClassSanityTester {
           IllegalAccessException, InvocationTargetException, FactoryMethodReturnsNullException {
     List<Parameter> params = factory.getParameters();
     List<FreshValueGenerator> argGenerators = Lists.newArrayListWithCapacity(params.size());
-    List<Object> args = Lists.newArrayListWithCapacity(params.size());
+    List<@Nullable Object> args = Lists.newArrayListWithCapacity(params.size());
     for (Parameter param : params) {
       FreshValueGenerator generator = newFreshValueGenerator();
       argGenerators.add(generator);
@@ -662,6 +665,7 @@ public final class ClassSanityTester {
     FreshValueGenerator generator =
         new FreshValueGenerator() {
           @Override
+          @CheckForNull
           Object interfaceMethodCalled(Class<?> interfaceType, Method method) {
             return getDummyValue(TypeToken.of(interfaceType).method(method).getReturnType());
           }
@@ -741,6 +745,7 @@ public final class ClassSanityTester {
     return args;
   }
 
+  @CheckForNull
   private <T> T getDummyValue(TypeToken<T> type) {
     Class<? super T> rawType = type.getRawType();
     @SuppressWarnings("unchecked") // Assume all default values are generics safe.
@@ -834,7 +839,7 @@ public final class ClassSanityTester {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       return obj instanceof SerializableDummyProxy;
     }
 
